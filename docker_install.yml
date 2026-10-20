@@ -1,0 +1,68 @@
+---
+- name: Installer Docker, Jenkins, Portainer et le conteneur web
+  hosts: nodes
+  become: true
+  tasks:
+    - name: Installer les prérequis et Docker
+      ansible.builtin.apt:
+        name:
+          - docker.io
+          - docker-compose-v2
+          - curl
+        state: present
+        update_cache: true
+
+    - name: Démarrer Docker
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Ajouter l'utilisateur au groupe docker
+      ansible.builtin.user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: true
+
+    - name: Lancer Portainer
+      community.docker.docker_container:
+        name: portainer
+        image: portainer/portainer-ce:latest
+        ports:
+          - "9000:9000"
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
+          - portainer_data:/data
+        restart_policy: always
+
+    - name: Lancer Jenkins (en conteneur Docker)
+      community.docker.docker_container:
+        name: jenkins
+        image: jenkins/jenkins:lts
+        ports:
+          - "8081:8080"
+        volumes:
+          - jenkins_home:/var/jenkins_home
+        restart_policy: always
+
+    - name: Créer le dossier de l'application
+      ansible.builtin.file:
+        path: "/home/{{ ansible_user }}/webapp"
+        state: directory
+        owner: "{{ ansible_user }}"
+        mode: '0755'
+
+    - name: Copier le Dockerfile, l'index.html et le compose
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: "/home/{{ ansible_user }}/webapp/{{ item }}"
+        owner: "{{ ansible_user }}"
+      loop:
+        - Dockerfile
+        - index.html
+        - docker-compose.yml
+
+    - name: Lancer le conteneur web (build et up)
+      ansible.builtin.command:
+        cmd: docker compose up -d --build
+        chdir: "/home/{{ ansible_user }}/webapp"

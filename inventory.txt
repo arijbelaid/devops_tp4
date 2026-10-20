@@ -1,0 +1,12 @@
+[webserver]
+192.168.159.22
+
+[ftpserver]
+192.168.159.23
+
+[nodes:children]
+webserver
+ftpserver
+
+[nodes:vars]
+ansible_user=arij

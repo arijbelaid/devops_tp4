@@ -1,0 +1,10 @@
+---
+- name: Lancer Jenkins (en conteneur Docker)
+  community.docker.docker_container:
+    name: jenkins
+    image: jenkins/jenkins:lts
+    ports:
+      - "8081:8080"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+    restart_policy: always

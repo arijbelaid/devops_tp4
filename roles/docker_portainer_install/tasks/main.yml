@@ -1,0 +1,32 @@
+---
+- name: Installer les prérequis et Docker
+  ansible.builtin.apt:
+    name:
+      - docker.io
+      - docker-compose-v2
+      - curl
+    state: present
+    update_cache: true
+
+- name: Démarrer Docker
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Ajouter l'utilisateur au groupe docker
+  ansible.builtin.user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: true
+
+- name: Lancer Portainer
+  community.docker.docker_container:
+    name: portainer
+    image: portainer/portainer-ce:latest
+    ports:
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    restart_policy: always

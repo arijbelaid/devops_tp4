@@ -1,0 +1,8 @@
+---
+- name: Déploiement complet avec rôles
+  hosts: nodes
+  become: true
+  roles:
+    - docker_portainer_install
+    - jenkins_install
+    - container_deployment

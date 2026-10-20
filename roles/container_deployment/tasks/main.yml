@@ -1,0 +1,23 @@
+---
+- name: Créer le dossier de l'application
+  ansible.builtin.file:
+    path: "/home/{{ ansible_user }}/webapp"
+    state: directory
+    owner: "{{ ansible_user }}"
+    mode: '0755'
+
+- name: Copier le Dockerfile, l'index.html et le compose
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/home/{{ ansible_user }}/webapp/{{ item }}"
+    owner: "{{ ansible_user }}"
+  loop:
+    - Dockerfile
+    - index.html
+    - docker-compose.yml
+
+- name: Lancer le conteneur web (build et up)
+  ansible.builtin.command:
+    cmd: docker compose up -d --build
+    chdir: "/home/{{ ansible_user }}/webapp"
+  changed_when: false   # <--- AJOUTE CETTE LIGNE
